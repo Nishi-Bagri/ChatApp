@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat App</title>
+</head>
+<body>
+
+<script>
+    const token = localStorage.getItem("token");
+
+    if (token) {
+        // already logged in → go to chat
+        window.location.href = "/login/";
+    } else {
+        // not logged in → go to login
+        window.location.href = "/accounts/login/";
+    }
+</script>
+
+</body>
+</html>
