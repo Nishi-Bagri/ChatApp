@@ -5,9 +5,9 @@ from .serializers import ConversationSerializer, MessageSerializer
 from rest_framework.exceptions import ValidationError
 from django.contrib.auth.models import User
 
+
 class ConversationViewSet(viewsets.ModelViewSet):
     permission_classes=[IsAuthenticated]
-
     serializer_class = ConversationSerializer
 
     def get_queryset(self):
@@ -28,6 +28,13 @@ class ConversationViewSet(viewsets.ModelViewSet):
             other_user = User.objects.get(id=other_user_id)
         except User.DoesNotExist:
             raise ValidationError("User not found")
+        
+        existing = Conversation.objects.filter(
+            participants = current_user).filter(participants=other_user).first()
+        
+        if existing:
+            serializer.instance = existing
+            return
         
         conversation = serializer.save()
 

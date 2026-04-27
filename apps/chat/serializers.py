@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Message, Conversation
 
+
 class ConversationSerializer(serializers.ModelSerializer):
     participant_id = serializers.IntegerField(write_only=True, required=False)
 
