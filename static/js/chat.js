@@ -1,16 +1,15 @@
+console.log("CHAT JS LOADED");
+
 const token = localStorage.getItem("token");
 
 if (!token) {
     window.location.href = "/accounts/login/";
 }
 
-const socket = new WebSocket(
-    `ws://127.0.0.1:8000/ws/chat/${conversationId}/?token=${token}`
-);
-
 const BASE_URL = "http://127.0.0.1:8000/api/chat";
 
 let currentConversation = null;
+
 let socket = null;
 
 function getCurrentUserId() {
@@ -37,7 +36,7 @@ async function loadConversations() {
         const div = document.createElement("div");
         div.className = "conversation";
 
-        // ✅ FIXED: safe participant handling
+       
         let otherUser = null;
 
         if (conv.participants && conv.participants.length > 0) {
@@ -46,31 +45,46 @@ async function loadConversations() {
             );
         }
 
-        // ✅ CLEAN DISPLAY LOGIC
-        if (otherUser) {
+       
+        if (otherUser?.username) {
             div.innerText = otherUser.username;
-        } else if (conv.participants && conv.participants.length > 0) {
-            // fallback for group chat or self chat
+
+        } else if (conv.participants?.length > 0) {
+            
             div.innerText = conv.participants
+                .filter(u => u && u.username)
                 .map(u => u.username)
-                .join(", ");
+                .join(", ") || "Unknown chat";
         } else {
             div.innerText = "Unknown chat";
         }
 
+        const id = conv.id || conv.conversation_id;   
+
         div.onclick = () => {
-            currentConversation = conv.id;
-            loadMessages(conv.id);
+            if (!id) return; 
+
+            currentConversation = id;
+            loadMessages(id);
         };
 
         list.appendChild(div);
     });
 
-    // ✅ auto open first chat only if none selected
-    if (data.length > 0 && !currentConversation) {
-        currentConversation = data[0].id;
-        loadMessages(data[0].id);
+     if (!currentConversation) {
+        document.getElementById("messageBox").innerHTML =
+            "<div class='empty'>Select a conversation to start chatting</div>";
+
+        document.getElementById("chatInput").style.display = "none";
     }
+
+    // ✅ auto open first chat only if none selected
+    // if (data.length > 0 && !currentConversation) {
+    //     const id = data[0].id || data[0].conversation_id;
+
+    //     currentConversation = id;
+    //     loadMessages(id);
+    // }
 }
 
 /* =========================
@@ -78,6 +92,14 @@ async function loadConversations() {
 ========================= */
 
 async function loadMessages(conversationId) {
+
+   console.log("loadMessages called with:", conversationId);
+
+    if (!conversationId) {
+
+        return;
+    }
+
     const res = await fetch(`${BASE_URL}/messages/?conversation=${conversationId}`, {
         headers: {
             "Authorization": `Bearer ${token}`
@@ -110,30 +132,38 @@ async function loadMessages(conversationId) {
 // =========================
 
 function connectSocket(conversationId) {
+    console.trace("connectSocket called with:", conversationId);
+    console.log("Connecting to conversation:", conversationId);  // 👈 ADD THIS
+    
+    const token = localStorage.getItem("token");
+
     if (socket) {
         socket.close();
+        socket = null;
     }
 
     socket = new WebSocket(
-        `ws://127.0.0.1:8000/ws/chat/${conversationId}/`
+        `ws://127.0.0.1:8000/ws/chat/${conversationId}/?token=${token}`
     );
 
     socket.onopen = function () {
         console.log("WebSocket connected");
     };
+    
 
     socket.onmessage = function (event) {
         const data = JSON.parse(event.data);
+
+        console.log("WS MESSAGE:", data);
 
         const box = document.getElementById("messageBox");
 
         const div = document.createElement("div");
         div.className = "msg other";
+
         div.innerText = data.message;
 
         box.appendChild(div);
-
-        box.scrollTop = box.scrollHeight;
     };
 
     socket.onclose = function () {
@@ -184,12 +214,17 @@ async function loadUsers() {
         }
     });
 
-    const users = await res.json();
+    const data = await res.json();  //
+
+    const users = data.results || data;
 
     const list = document.getElementById("userList");
     list.innerHTML = "";
 
     users.forEach(user => {
+        if (!user || !user.username) return;
+
+
         const div = document.createElement("div");
         div.className = "conversation";
         div.innerText = "👤 " + user.username;
@@ -207,6 +242,16 @@ async function loadUsers() {
 ========================= */
 
 async function toggleUserList() {
+    const userList = document.getElementById("userList");
+
+    // toggle visibility
+    if (userList.style.display === "none") {
+        userList.style.display = "block";
+    } else {
+        userList.style.display = "none";
+        return;
+    }
+
     const res = await fetch(
         "http://127.0.0.1:8000/api/accounts/users/",
         {
@@ -216,13 +261,11 @@ async function toggleUserList() {
         }
     );
 
+    
+
     const users = await res.json();
 
-    const box = document.getElementById("messageBox");
-
-    document.getElementById("chatInput").style.display = "none";
-
-    box.innerHTML = "<h3>Select a user to start chat</h3>";
+    userList.innerHTML = "";
 
     users
         .filter(user => user.id !== getCurrentUserId())
@@ -233,7 +276,7 @@ async function toggleUserList() {
 
             div.onclick = () => startConversation(user.id);
 
-            box.appendChild(div);
+            userList.appendChild(div);
         });
 }
 
@@ -243,6 +286,7 @@ async function toggleUserList() {
 ========================= */
 
 async function startConversation(userId) {
+
     const res = await fetch(`${BASE_URL}/conversations/`, {
         method: "POST",
         headers: {
@@ -256,13 +300,33 @@ async function startConversation(userId) {
 
     const data = await res.json();
 
-    // 🔥 Open chat instantly
-    currentConversation = data.id;
-    loadMessages(data.id);
+    const id = data.id || data.conversation_id;
 
-    // refresh conversations
+    if (!id) {
+        console.error("Invalid conversation response:", data);
+        return;
+    }
+
+    currentConversation = id; 
+
+    loadMessages(id);
     loadConversations();
 
-    // hide user list
-    // document.getElementById("userList").style.display = "none";
+    // ✅ hide user list after click
+    document.getElementById("userList").style.display = "none";
 }
+
+function logout() {
+    console.log("logout clicked");
+
+    localStorage.clear();
+    window.location.href = "/accounts/register/";
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    const btn = document.getElementById("logoutBtn");
+
+    if (btn) {
+        btn.addEventListener("click", logout);
+    }
+});

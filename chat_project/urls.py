@@ -23,7 +23,7 @@ urlpatterns = [
 
     path('admin/', admin.site.urls),
 
-    path('', login_view),
+    path('login/', login_view),
     
 
     #Backend APIs

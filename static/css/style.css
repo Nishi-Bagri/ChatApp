@@ -167,3 +167,10 @@ body {
 .input-box button:hover {
     background: #0a7b6a;
 }
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    background: #f6f8f7;
+}

@@ -26,6 +26,7 @@ if (loginForm) {
 
             if (res.ok && data.access) {
                 localStorage.setItem("token", data.access);
+                localStorage.setItem("refresh", data.refresh);
                 message.innerText = "Login successful ✅";
                 window.location.href = "/chat/";
 

@@ -29,9 +29,9 @@ class ConversationViewSet(viewsets.ModelViewSet):
         except User.DoesNotExist:
             raise ValidationError("User not found")
         
-        existing = Conversation.objects.filter(
-            participants = current_user).filter(participants=other_user).first()
-        
+        existing = Conversation.objects.filter(participants=current_user).filter(participants=other_user).distinct().first()
+
+
         if existing:
             serializer.instance = existing
             return
@@ -47,7 +47,7 @@ class MessageViewSet(viewsets.ModelViewSet):
     serializer_class = MessageSerializer
     
     def get_queryset(self):
-        return Message.objects.filter(conversation__participants=self.request.user)
+        return Message.objects.filter(conversation__participants=self.request.user).order_by("timestamp")
 
     def perform_create(self, serializer):
         current_user = self.request.user
