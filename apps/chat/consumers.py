@@ -4,6 +4,8 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 class ChatConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
+        print("SCOPE USER:", self.scope["user"])
+        print("AUTH:", self.scope["user"].is_authenticated)
         self.room_id = self.scope["url_route"]["kwargs"]["room_id"]
         self.room_group_name = f"chat_{self.room_id}"
 
@@ -29,6 +31,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         username = user.username if user.is_authenticated else "Anonymous"
         
         print(f"USER:{username}, MESSAGE:{message}") 
+        print("BROADCASTING TO GROUP:", self.room_group_name)
         # print("SCOPE USER:", self.scope["user"])
         # print("AUTH:", self.scope["user"].is_authenticated)
 
@@ -42,6 +45,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
     async def chat_message(self, event):
+        print("RECEIVED IN CONSUMER:", event)
         message = event["message"]
         username = event["username"]
 

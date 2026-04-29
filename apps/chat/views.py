@@ -1,9 +1,12 @@
 from rest_framework import viewsets
+from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from .models import Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer
 from rest_framework.exceptions import ValidationError
 from django.contrib.auth.models import User
+from rest_framework.response import Response
+
 
 
 class ConversationViewSet(viewsets.ModelViewSet):
@@ -47,13 +50,47 @@ class MessageViewSet(viewsets.ModelViewSet):
     serializer_class = MessageSerializer
     
     def get_queryset(self):
-        return Message.objects.filter(conversation__participants=self.request.user).order_by("timestamp")
+        conversation_id = self.request.query_params.get("conversation_id")
+
+        queryset = Message.objects.filter(conversation__participants=self.request.user)
+
+        if conversation_id:
+            queryset = queryset.filter(conversation_id=conversation_id)
+
+        return queryset.order_by("timestamp")
 
     def perform_create(self, serializer):
         current_user = self.request.user
-        conversation = serializer.validated_data.get('conversation')
 
-        if not conversation.participants.filter(id=current_user.id).exists():
-            raise ValidationError("You are not part of this conversation")
+        conversation_id = self.request.data.get("conversation_id")
+
+        if not conversation_id:
+            raise ValidationError("conversation_id is required")
         
-        serializer.save(sender=current_user)
+        try:
+            conversation = Conversation.objects.get(
+                id = conversation_id,
+                participants = current_user
+            )
+        except Conversation.DoesNotExist:
+            raise ValidationError("Invalid conversation")
+
+
+        serializer.save(
+            sender = current_user,
+            conversation=conversation
+        )
+        
+
+class UnreadCountView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        count = Message.objects.filter(
+            conversation__participants=request.user,
+            is_read=False
+        ).exclude(
+            sender=request.user 
+        ).count()
+
+        return Response({"unread": count})
