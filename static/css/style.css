@@ -174,3 +174,14 @@ body {
     padding: 10px;
     background: #f6f8f7;
 }
+
+.top-bar {
+    background-color: #075e54; /* or whatever your theme color is */
+    color: white;
+    padding: 10px 16px;
+    font-size: 14px;
+}
+
+.top-bar b {
+    color: #fff;
+}

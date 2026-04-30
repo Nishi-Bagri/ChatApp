@@ -27,8 +27,11 @@ def password_reset_done_view(request):
     return render(request, "accounts/password_reset_done.html")
 
 
-def password_reset_confirm_view(request):
-    return render(request, "accounts/password_reset_confirm.html")
+def password_reset_confirm_view(request, uidb64, token ):
+    return render(request, "accounts/password_reset_confirm.html",{
+        "uidb64": uidb64,
+        "token": token
+    })
 
 
 def password_reset_complete_view(request):

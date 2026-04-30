@@ -24,7 +24,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         data = json.loads(text_data)
-        message = data.get("message")
+        message = data.get("message",'')
         
         user = self.scope["user"]
 
@@ -32,8 +32,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         
         print(f"USER:{username}, MESSAGE:{message}") 
         print("BROADCASTING TO GROUP:", self.room_group_name)
-        # print("SCOPE USER:", self.scope["user"])
-        # print("AUTH:", self.scope["user"].is_authenticated)
+        
 
         await self.channel_layer.group_send(
             self.room_group_name,

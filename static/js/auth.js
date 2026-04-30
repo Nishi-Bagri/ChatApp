@@ -28,14 +28,15 @@ if (loginForm) {
                 localStorage.setItem("token", data.access);
                 localStorage.setItem("refresh", data.refresh);
                 localStorage.setItem("user_id", data.user_id);
-                message.innerText = "Login successful ✅";
+                localStorage.setItem("username", data.username);
+                message.innerText = "Login successful";
                 window.location.href = "/chat/";
 
                 // redirect to chat page (you'll create later)
                 // window.location.href = "chat.html";
 
             } else {
-                message.innerText = "Invalid credentials ❌";
+                message.innerText = "Invalid credentials";
             }
 
         } catch (error) {

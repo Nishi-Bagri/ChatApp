@@ -5,7 +5,14 @@ from django.contrib.auth import authenticate
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import RegisterSerializer,UserSerializer, PasswordResetSerializer
+from .serializers import MyTokenObtainPairSerializer,RegisterSerializer,UserSerializer, PasswordResetSerializer
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import default_token_generator
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -45,9 +52,16 @@ class PasswordRestView(APIView):
                     status=status.HTTP_404_NOT_FOUND
                 )
             
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            token = default_token_generator.make_token(user)
+
+            reset_link = f"http://127.0.0.1:8000/accounts/password-reset-confirm/{uid}/{token}/"
+            
+            print("RESET LINK:", reset_link)
+
             user.set_password(new_password)
             user.save()
 
-            return Response({"message":"Password reset Successfully!"})
+            return Response({"message":"Reset link generated!", "reset_link":reset_link})
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
