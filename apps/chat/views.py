@@ -1,7 +1,7 @@
 from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from .models import Conversation, Message
+from .models import Conversation, Message, UserStatus
 from .serializers import ConversationSerializer, MessageSerializer
 from rest_framework.exceptions import ValidationError
 from django.contrib.auth.models import User
@@ -94,3 +94,19 @@ class UnreadCountView(APIView):
         ).count()
 
         return Response({"unread": count})
+    
+
+class UserStatusView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user_id = request.query_params.get("user_id")
+
+        try:
+            status = UserStatus.objects.get(user_id=user_id)
+            return Response({
+                "is_online": status.is_online,
+                "last_seen": status.last_seen,
+            })
+        except UserStatus.DoesNotExist:
+            return Response({"is_online": False, "last_seen": None})

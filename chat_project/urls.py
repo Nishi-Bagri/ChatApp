@@ -16,28 +16,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from django.shortcuts import redirect
-from apps.accounts.template_views import login_view
-
-
-def home(request):
-    return redirect('/login/')
 
 urlpatterns = [
 
-
-    path('', home),
     path('admin/', admin.site.urls),
 
-    path('login/', login_view),
-    
+    # API routes
+    path('api/chat/', include('apps.chat.urls')),
 
-    #Backend APIs
-    path('api/chat/',include('apps.chat.api_urls')),
-    path('api/accounts/',include('apps.accounts.api_urls')),
-
-    #UI 
-    path('accounts/',include('apps.accounts.urls')),
-    path('chat/', include('apps.chat.urls')),
-
+    path('api/accounts/', include('apps.accounts.urls')),
 ]

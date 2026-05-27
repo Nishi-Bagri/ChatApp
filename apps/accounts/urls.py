@@ -1,16 +1,45 @@
 from django.urls import path
-from .template_views import (
-    register_view,password_reset_view,
-    password_reset_done_view,password_reset_confirm_view,
-    password_reset_complete_view)
+
+from rest_framework_simplejwt.views import (
+    TokenRefreshView
+)
+
+from .views import (
+    RegisterView,
+    UserListView,
+    PasswordResetView,
+    MyTokenObtainPairView,
+)
 
 urlpatterns = [
-  
-    path('register/', register_view),
 
-    path('password-reset/', password_reset_view),
-    path('password-reset/done/', password_reset_done_view),
-    path('password-reset/confirm/<uidb64>/<token>/', password_reset_confirm_view),
-    path('password-reset/complete/', password_reset_complete_view),
+    path(
+        'register/',
+        RegisterView.as_view(),
+        name='register'
+    ),
 
+    path(
+        'users/',
+        UserListView.as_view(),
+        name='users'
+    ),
+
+    path(
+        'login/',
+        MyTokenObtainPairView.as_view(),
+        name='token_obtain_pair'
+    ),
+
+    path(
+        'token/refresh/',
+        TokenRefreshView.as_view(),
+        name='token_refresh'
+    ),
+
+    path(
+        'reset-password/',
+        PasswordResetView.as_view(),
+        name='reset-password'
+    ),
 ]
